@@ -89,7 +89,7 @@ font=$(convert -list font | awk "{ a[NR] = \$2 } /family: $(fc-match sans -f "%{
 image="$(mktemp --suffix=.png)"
 
 # brightness value to compare to, everything above is considered white and everything below black
-threshold="40" 
+threshold="40"
 
 desktop=""
 shot=(import -window root)
@@ -209,27 +209,83 @@ convert "$image" "${hue[@]}" "${effect[@]}" "${decoration_params[@]}" "$image"
 
 avg_brightness=$((sum_brightness / num_monitors))
 
-if [ "$avg_brightness" -gt "$threshold" ]; then # Screenshot is rather bright, so we use dark colors
-    param=("--textcolor=00000000" "--insidecolor=0000001c" "--ringcolor=0000003e" \
-        "--linecolor=00000000" "--keyhlcolor=ffffff80" "--ringvercolor=ffffff00" \
-        "--separatorcolor=22222260" "--insidevercolor=ffffff1c" \
-        "--ringwrongcolor=ffffff55" "--insidewrongcolor=ffffff1c")
+C_MIDNIGHT_BLUE="#2c3e50ff"
+C_POMEGRANATE="#c0392bff"
+C_POMEGRANATE_SEMIT="#c0392b33"
+C_TRANSPARENT="#00000000"
+C_SILVER="#bdc3c7ff"
+C_ASBESTOS="#7f8c8dff"
+C_WISTERIA="#8e44adff"
+C_PETERRIVER="#3498dbff"
+C_CLOUDS="#ecf0f1ff"
+C_CARROT="#e67e22ff"
+C_SUNFLOWER="#f1c40fff"
+C_SUNFLOWER_SEMIT="#f1c40f33"
+C_PUMPKIN="#d35400ff"
+C_ALIZARIN="#e74c3cff"
+C_ALIZARIN_SEMIT="#e74c3c33"
+C_GREENSEA="#16a085ff"
+
+if [ "$avg_brightness" -gt "$threshold" ]; then
+  # Screenshot is rather bright, so we use dark colors
+  TEXT_COLOR=$C_MIDNIGHT_BLUE
+  INSIDE_COLOR=$C_ALIZARIN_SEMIT
+  RING_COLOR=$C_POMEGRANATE
+  LINE_COLOR=$C_SILVER
+  KEY_HL_COLOR=$C_GREENSEA
+  RING_VER_COLOR=$C_CARROT
+  SEPARATOR_COLOR=$C_PETERRIVER
+  INSIDE_VER_COLOR=$C_SUNFLOWER_SEMIT
+  RING_WRONG_COLOR=$C_ALIZARIN
+  INSIDE_WRONG_COLOR=$C_POMEGRANATE_SEMIT
+  VERIF_COLOR=$C_PUMPKIN
+  WRONG_COLOR=$C_POMEGRANATE
 else # Bright colors
-    param=("--textcolor=ffffff00" "--insidecolor=ffffff1c" "--ringcolor=ffffff3e" \
-        "--linecolor=ffffff00" "--keyhlcolor=00000080" "--ringvercolor=00000000" \
-        "--separatorcolor=22222260" "--insidevercolor=0000001c" \
-        "--ringwrongcolor=00000055" "--insidewrongcolor=0000001c")
+  echo "[D] Using Bright Colors"
+  TEXT_COLOR=$C_MIDNIGHT_BLUE
+  INSIDE_COLOR=$C_TRANSPARENT
+  RING_COLOR=$C_POMEGRANATE
+  LINE_COLOR=$C_SILVER
+  KEY_HL_COLOR=$C_ASBESTOS
+  RING_VER_COLOR=$C_WISTERIA
+  SEPARATOR_COLOR=$C_PETERRIVER
+  INSIDE_VER_COLOR=$C_CLOUDS
+  RING_WRONG_COLOR=$C_ALIZARIN
+  INSIDE_WRONG_COLOR=$C_POMEGRANATE
+  VERIF_COLOR=$C_ALIZARIN
+  WRONG_COLOR=$C_POMEGRANATE
 fi
+
+param=(
+#"--textcolor=${TEXT_COLOR}"
+       "--insidecolor=${INSIDE_COLOR}"
+       "--ringcolor=${RING_COLOR}" \
+        "--linecolor=${LINE_COLOR}"
+        "--keyhlcolor=${KEY_HL_COLOR}"
+        "--ringvercolor=${RING_VER_COLOR}" \
+        "--separatorcolor=${SEPARATOR_COLOR}"
+        "--insidevercolor=${INSIDE_VER_COLOR}" \
+        "--ringwrongcolor=${RING_WRONG_COLOR}" \
+        "--insidewrongcolor=${INSIDE_WRONG_COLOR}" \
+        "--verifcolor=${VERIF_COLOR}" \
+        "--wrongcolor=${WRONG_COLOR}")
+
+echo ${param[@]}
 
 # If invoked with -d/--desktop, we'll attempt to minimize all windows (ie. show
 # the desktop) before locking.
 ${desktop} ${desktop:+-k on}
 
+ASAN_OPTIONS=detect_leaks=0
+echo "Executing... ${i3lock_cmd[@]}" "${param[@]}"
 # try to use i3lock with prepared parameters
-if ! "${i3lock_cmd[@]}" "${param[@]}" >/dev/null 2>&1; then
-    # We have failed, lets get back to stock one
-    "${i3lock_cmd[@]}"
-fi
+#if ! "${i3lock_cmd[@]}" "${param[@]}" >/dev/null 2>&1; then
+#    # We have failed, lets get back to stock one
+#    echo "Failed!"
+#    "${i3lock_cmd[@]}"
+#fi
+
+"${i3lock_cmd[@]}" "${param[@]}" >/dev/null 2>&1;
 
 # As above, if we were passed -d/--desktop, we'll attempt to restore all windows
 # after unlocking.
